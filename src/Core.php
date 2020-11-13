@@ -74,7 +74,10 @@ class Core
     public function runPlugins(): array
     {
         $output = [];
-        IOHandler::$io->title(' ~~ Phalyfusion! ~~ ');
+        if (IOHandler::$input->getOption('format') == 'table') {
+            IOHandler::$io->title(' ~~ Phalyfusion! ~~ ');
+        }
+
         foreach ($this->plugins as $plugin) {
             OutputGenerator::nextAnalyzer($plugin->getName(), count($this->plugins));
             $pluginName = $plugin::getName();
