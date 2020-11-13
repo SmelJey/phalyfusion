@@ -4,12 +4,52 @@ namespace Phalyfusion\Console;
 
 use Phalyfusion\Model\ErrorModel;
 use Phalyfusion\Model\PluginOutputModel;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 /**
  * Class OutputGenerator.
  */
 class OutputGenerator
 {
+    /**
+     * @var ProgressBar
+     */
+    private static $progressBar;
+
+    /**
+     * @param string $analyzerName
+     * @param int    $analyzersCnt
+     */
+    public static function nextAnalyzer(string $analyzerName, int $analyzersCnt): void
+    {
+        if (IOHandler::$input->getOption('no-progress')) {
+            return;
+        }
+
+        if (self::$progressBar == null) {
+            IOHandler::$output->writeln('Analyze in progress');
+
+            self::$progressBar = new ProgressBar(IOHandler::$output, $analyzersCnt);
+            self::$progressBar->setOverwrite(true);
+            self::$progressBar->setFormat("<fg=white>[%current%/%max%] Current analyzer: %message%</>\n[%bar%]\n");
+
+            self::$progressBar->setEmptyBarCharacter('<fg=white>|</>');
+            self::$progressBar->setProgressCharacter('<fg=green>➤</>');
+
+            self::$progressBar->setMessage($analyzerName);
+            self::$progressBar->start();
+        } else {
+            self::$progressBar->setMessage($analyzerName);
+            self::$progressBar->advance();
+        }
+
+        if (self::$progressBar->getProgress() == $analyzersCnt) {
+            self::$progressBar->finish();
+
+            return;
+        }
+    }
+
     /**
      * @param PluginOutputModel[] $outputModels
      *
@@ -20,7 +60,6 @@ class OutputGenerator
         $model      = self::combineModels($outputModels);
         $errorCount = 0;
 
-        IOHandler::$io->title(' ~~ Phalyfusion! ~~ ');
         if (!$model->getFiles()) {
             IOHandler::$io->success('No errors found!');
 
