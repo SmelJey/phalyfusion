@@ -17,35 +17,55 @@ class OutputGenerator
     private static $progressBar;
 
     /**
-     * @param string $analyzerName
-     * @param int $analyzersCnt
+     * @var bool
      */
-    public static function nextAnalyzer(string $analyzerName, int $analyzersCnt): void {
+    private static $isBarInit;
+
+    public static function initProgressBar(int $stepsCnt): void {
+        if (IOHandler::$input->getOption('format') == 'table') {
+            IOHandler::$io->title(' ~~ Phalyfusion! ~~ ');
+        }
+
         if (IOHandler::$input->getOption('no-progress')) {
             return;
         }
 
+        IOHandler::$output->writeln('Analyze in progress');
+
+        self::$progressBar = new ProgressBar(IOHandler::$output, $stepsCnt);
+        self::$progressBar->setOverwrite(true);
+        self::$progressBar->setFormat("<fg=white>[%current%/%max%] Current analyzer: %message%</>\n[%bar%]\n");
+
+        self::$progressBar->setEmptyBarCharacter('<fg=white>|</>');
+        self::$progressBar->setProgressCharacter('<fg=green>➤</>');
+    }
+
+    /**
+     * @param string $analyzerName
+     */
+    public static function nextAnalyzer(string $analyzerName): void {
         if (self::$progressBar == null) {
-            IOHandler::$output->writeln('Analyze in progress');
-
-            self::$progressBar = new ProgressBar(IOHandler::$output, $analyzersCnt);
-            self::$progressBar->setOverwrite(true);
-            self::$progressBar->setFormat("<fg=white>[%current%/%max%] Current analyzer: %message%</>\n[%bar%]\n");
-
-            self::$progressBar->setEmptyBarCharacter('<fg=white>|</>');
-            self::$progressBar->setProgressCharacter('<fg=green>➤</>');
-
-            self::$progressBar->setMessage($analyzerName);
-            self::$progressBar->start();
-        } else {
-            self::$progressBar->setMessage($analyzerName);
-            self::$progressBar->advance();
-        }
-
-        if (self::$progressBar->getProgress() == $analyzersCnt) {
-            self::$progressBar->finish();
             return;
         }
+
+        self::$progressBar->setMessage($analyzerName);
+
+        if (!self::$isBarInit) {
+            self::$progressBar->start();
+            self::$isBarInit = true;
+            return;
+        }
+
+        self::$progressBar->advance();
+    }
+
+    public static function finishProgressBar(): void {
+        if (self::$progressBar == null) {
+            return;
+        }
+
+        self::$progressBar->setMessage('Done!');
+        self::$progressBar->finish();
     }
 
     /**
