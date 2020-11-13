@@ -30,7 +30,7 @@ class OutputGenerator
             return;
         }
 
-        IOHandler::$output->writeln('Analyze in progress');
+        IOHandler::$output->writeln('Analyzers in progress...');
 
         self::$progressBar = new ProgressBar(IOHandler::$output, $stepsCnt);
         self::$progressBar->setOverwrite(true);
