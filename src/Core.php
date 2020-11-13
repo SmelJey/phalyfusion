@@ -4,6 +4,7 @@ namespace Phalyfusion;
 
 use Composer\Autoload\ClassMapGenerator;
 use Phalyfusion\Console\IOHandler;
+use Phalyfusion\Console\OutputGenerator;
 use Phalyfusion\Model\PluginOutputModel;
 use Phalyfusion\Plugins\PluginRunnerInterface;
 use ReflectionClass;
@@ -73,7 +74,9 @@ class Core
     public function runPlugins(): array
     {
         $output = [];
+        IOHandler::$io->title(' ~~ Phalyfusion! ~~ ');
         foreach ($this->plugins as $plugin) {
+            OutputGenerator::nextAnalyzer($plugin->getName(), count($this->plugins));
             $pluginName = $plugin::getName();
             if (!array_key_exists($pluginName, $this->runCommands)) {
                 IOHandler::error("{$pluginName} run failed!", "No run command for {$pluginName} provided in config");
@@ -81,6 +84,7 @@ class Core
             }
             $output = array_merge($output, $plugin->run($this->runCommands[$pluginName], $this->paths));
         }
+        OutputGenerator::nextAnalyzer('Done!', count($this->plugins));
 
         return $output;
     }
