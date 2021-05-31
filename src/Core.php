@@ -73,13 +73,11 @@ class Core
      */
     public function runPlugins(): array
     {
-        $output = [];
-        if (IOHandler::$input->getOption('format') == 'table') {
-            IOHandler::$io->title(' ~~ Phalyfusion! ~~ ');
-        }
+        $output     = [];
+        $totalSteps = array_sum(array_map([$this, 'countCommands'], $this->plugins));
+        OutputGenerator::initProgressBar($totalSteps);
 
         foreach ($this->plugins as $plugin) {
-            OutputGenerator::nextAnalyzer($plugin->getName(), count($this->plugins));
             $pluginName = $plugin::getName();
             if (!array_key_exists($pluginName, $this->runCommands)) {
                 IOHandler::error("{$pluginName} run failed!", "No run command for {$pluginName} provided in config");
@@ -87,9 +85,20 @@ class Core
             }
             $output = array_merge($output, $plugin->run($this->runCommands[$pluginName], $this->paths));
         }
-        OutputGenerator::nextAnalyzer('Done!', count($this->plugins));
+        OutputGenerator::finishProgressBar();
 
         return $output;
+    }
+
+    private function countCommands(PluginRunnerInterface $plugin): int
+    {
+        $pluginName = $plugin->getName();
+        if (!array_key_exists($pluginName, $this->runCommands)) {
+            IOHandler::error("{$pluginName} run failed!", "No run command for {$pluginName} provided in config");
+            exit(1);
+        }
+
+        return count($this->runCommands[$pluginName]);
     }
 
     /**
